@@ -6,6 +6,10 @@ from rest_framework.response import Response
 from .models import Category,Brand,Product
 from .serializers import CategorySerializer,BrandSerializer,ProductSerializer
 from drf_spectacular.utils import extend_schema
+from django.db import connection
+from pygments import highlight
+from pygments.formatters import TerminalFormatter
+from pygments.lexers import SqlLexer
 # Create your views here.
 
 
@@ -27,13 +31,17 @@ class productViewSet(viewsets.ViewSet):
     """
     A simple viewset for viewing all products
     """
-    queryset=Product.objects.all()
-
-
+    queryset=Product.objects.is_active()
     lookup_field="slug"
     def retrieve(self,request,slug=None):
         """A viewset for view product by id """
-        serializer=ProductSerializer(self.queryset.filter(slug=slug),many=True)
+        serializer=ProductSerializer(self.queryset.filter(slug=slug).select_related("category"),many=True)
+        # x=self.queryset.filter(slug=slug)
+        # sqlformatted=format(str(x.query),reindent=True)
+        # sqlformatted = "{}".format(x.query)
+        # sqlformatted = sqlformat(str(x.query), reindent=True)
+
+        # print(highlight(sqlformatted,SqlLexer(),TerminalFormatter()))
         return Response(serializer.data)
     
 
